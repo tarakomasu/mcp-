@@ -1,3 +1,16 @@
+/**
+ * App Router版のMCPエンドポイント
+ *
+ * 注意: このファイルは参考用です。
+ * App RouterのNextResponseはNode.jsの標準ServerResponseと互換性がないため、
+ * StreamableHTTPServerTransportと直接使用することはできません。
+ *
+ * 実際に動作するのは pages/api/mcp.ts (Pages Router版) です。
+ *
+ * このエンドポイントは /api/mcp-app でアクセス可能ですが、
+ * 正常に動作しない可能性があります。
+ */
+
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { z } from "zod";
@@ -29,6 +42,10 @@ server.registerTool(
 /**
  * MCPリクエストを安全に処理するためのヘルパー関数。
  * リクエストごとに新しいトランスポートを生成し、エラーハンドリングを行います。
+ *
+ * 注意: App RouterのNextResponse/NextRequestはNode.js標準のHTTPオブジェクトではないため、
+ * StreamableHTTPServerTransportと互換性がありません。
+ *
  * @param request - Next.jsのNextRequestオブジェクト
  * @param body - (オプション) POSTリクエストのパース済みボディ
  * @returns Next.jsのNextResponseオブジェクト
@@ -54,6 +71,8 @@ async function handleMcpRequest(request: NextRequest, body?: unknown) {
     response.headers.set("Access-Control-Allow-Headers", "Content-Type");
 
     // 3. リクエストを処理
+    // 警告: NextRequest/NextResponseはNode.js標準HTTPと互換性がないため、
+    // 以下のコードは "writeHead is not a function" エラーを起こす可能性があります
     await transport.handleRequest(request as any, response as any, body);
 
     return response;
