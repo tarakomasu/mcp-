@@ -19,10 +19,29 @@ server.registerTool(
     },
   },
   async (args) => {
+    // ツール呼び出し開始ログ
+    console.log("[MCP Tool] countCharacters called");
+    console.log("[MCP Tool] Input:", JSON.stringify(args, null, 2));
+
+    const startTime = Date.now();
     const count = args.text.length;
-    return {
-      content: [{ type: "text", text: `The text has ${count} characters.` }],
+    const duration = Date.now() - startTime;
+
+    const result = {
+      content: [
+        { type: "text" as const, text: `The text has ${count} characters.` },
+      ],
     };
+
+    // ツール呼び出し成功ログ
+    console.log("[MCP Tool] countCharacters succeeded");
+    console.log(
+      "[MCP Tool] Result:",
+      JSON.stringify({ count, duration: `${duration}ms` }, null, 2)
+    );
+    console.log("[MCP Tool] Response:", JSON.stringify(result, null, 2));
+
+    return result;
   }
 );
 
@@ -80,6 +99,20 @@ export default async function handler(
   res: NextApiResponse
 ) {
   const { method } = req;
+  const timestamp = new Date().toISOString();
+
+  // リクエストログ
+  console.log(`[${timestamp}] MCP Request: ${method} /api/mcp`);
+
+  if (method === "POST" && req.body) {
+    const body = req.body as any;
+    if (body.method) {
+      console.log(`[MCP] JSON-RPC Method: ${body.method}`);
+      if (body.method === "tools/call" && body.params) {
+        console.log(`[MCP] Tool Name: ${body.params.name}`);
+      }
+    }
+  }
 
   // CORS プリフライトリクエスト
   if (method === "OPTIONS") {
@@ -87,6 +120,7 @@ export default async function handler(
     res.setHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
     res.setHeader("Access-Control-Allow-Headers", "Content-Type");
     res.status(204).end();
+    console.log(`[${timestamp}] MCP Response: OPTIONS 204`);
     return;
   }
 
@@ -101,5 +135,6 @@ export default async function handler(
   } else {
     res.setHeader("Allow", ["GET", "POST", "DELETE", "OPTIONS"]);
     res.status(405).end(`Method ${method} Not Allowed`);
+    console.log(`[${timestamp}] MCP Response: 405 Method Not Allowed`);
   }
 }
