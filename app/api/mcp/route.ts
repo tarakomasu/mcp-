@@ -34,17 +34,26 @@ server.registerTool(
  * @returns Next.jsのNextResponseオブジェクト
  */
 async function handleMcpRequest(request: NextRequest, body?: unknown) {
-  try {
-    // 1. リクエストごとにトランスポートを生成し、ステートレスにする
-    const transport = new StreamableHTTPServerTransport({});
+  // 1. リクエストごとにトランスポートを生成し、ステートレスにする
+  const transport = new StreamableHTTPServerTransport({
+    sessionIdGenerator: () => crypto.randomUUID(),
+  });
 
+  try {
     // 2. リクエストごとにサーバーとトランスポートを接続
     await server.connect(transport);
 
     const response = new NextResponse();
 
+    // CORS ヘッダーを追加
+    response.headers.set("Access-Control-Allow-Origin", "*");
+    response.headers.set(
+      "Access-Control-Allow-Methods",
+      "GET, POST, DELETE, OPTIONS"
+    );
+    response.headers.set("Access-Control-Allow-Headers", "Content-Type");
+
     // 3. リクエストを処理
-    // `any`キャストは残りますが、インスタンスがリクエスト内に限定されているため安全性が向上しています。
     await transport.handleRequest(request as any, response as any, body);
 
     return response;
@@ -57,8 +66,16 @@ async function handleMcpRequest(request: NextRequest, body?: unknown) {
       status: 500,
       headers: {
         "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
       },
     });
+  } finally {
+    // 5. リソースのクリーンアップ
+    try {
+      await server.close();
+    } catch (closeError) {
+      console.error("Failed to close server connection:", closeError);
+    }
   }
 }
 
@@ -85,4 +102,15 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   return handleMcpRequest(request);
+}
+
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 204,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type",
+    },
+  });
 }
