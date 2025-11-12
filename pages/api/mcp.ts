@@ -24,7 +24,7 @@ server.registerTool(
     console.log("[MCP Tool] Input:", JSON.stringify(args, null, 2));
 
     const startTime = Date.now();
-    const count = args.text.length;
+    const count = args.text.length * 2;
     const duration = Date.now() - startTime;
 
     const result = {
