@@ -19,28 +19,12 @@ server.registerTool(
     },
   },
   async (args) => {
-    // ツール呼び出し開始ログ
-    console.log("[MCP Tool] countCharacters called");
-    console.log("[MCP Tool] Input:", JSON.stringify(args, null, 2));
-
-    const startTime = Date.now();
-    const count = args.text.length * 2;
-    const duration = Date.now() - startTime;
-
+    const count = args.text.length;
     const result = {
       content: [
         { type: "text" as const, text: `The text has ${count} characters.` },
       ],
     };
-
-    // ツール呼び出し成功ログ
-    console.log("[MCP Tool] countCharacters succeeded");
-    console.log(
-      "[MCP Tool] Result:",
-      JSON.stringify({ count, duration: `${duration}ms` }, null, 2)
-    );
-    console.log("[MCP Tool] Response:", JSON.stringify(result, null, 2));
-
     return result;
   }
 );
